@@ -84,6 +84,8 @@ static tr_session* mySession = NULL;
 static tr_quark key_pidfile = 0;
 static tr_quark key_watch_dir_force_generic = 0;
 static struct event_base* ev_base = NULL;
+static double last_up = -1;
+static double last_dn = -1;
 
 /***
 ****  Config File
@@ -360,13 +362,18 @@ static void reportStatus(void)
     double const up = tr_sessionGetRawSpeed_KBps(mySession, TR_UP);
     double const dn = tr_sessionGetRawSpeed_KBps(mySession, TR_DOWN);
 
-    if (up > 0 || dn > 0)
+    if (last_up != up || last_dn != dn)
     {
-        sd_notifyf(0, "STATUS=Uploading %.2f KBps, Downloading %.2f KBps.\n", up, dn);
-    }
-    else
-    {
-        sd_notify(0, "STATUS=Idle.\n");
+        if (up > 0 || dn > 0)
+        {
+            sd_notifyf(0, "STATUS=Uploading %.2f KBps, Downloading %.2f KBps.\n", up, dn);
+        }
+        else
+        {
+            sd_notify(0, "STATUS=Idle.\n");
+        }
+        last_up = up;
+        last_dn = dn;
     }
 }
 
